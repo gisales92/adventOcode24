@@ -32,8 +32,6 @@ So, in this example, 2 reports are safe.
 Analyze the unusual data from the engineers. How many reports are safe?
 */
 
-
-
 const input = `74 76 78 79 76
 38 40 43 44 44
 1 2 4 6 8 9 13
@@ -1033,36 +1031,114 @@ const input = `74 76 78 79 76
 58 61 62 65 67 70 73
 40 37 34 33 32 31
 47 50 53 54 57 58 60 61
-59 58 55 53 52`
-
+59 58 55 53 52`;
 
 // helper function to check validity of report
 const checkReport = (report) => {
-    const levels = report.split(" ");
-    const first = Number(levels[0]);
-    const second = Number(levels[1]);
-    const increasing = first - second < 0; // negative === increasing; positive === decreasing - based off first 2 numbers
-    for (let i = 0; i < levels.length - 1; i++) {
-        const curr = Number(levels[i]);
-        const next = Number(levels[i + 1]);
-        const diff = curr - next;
-        // if difference between nums is greater than 3 or 0 - invalid
-        if (Math.abs(diff) > 3 || !diff) return 0;
-        if (diff < 0 && !increasing) return 0; // if numbers going up and we're supposed to be going down - invalid
-        if (diff > 0 && increasing) return 0; // and vice versa
-    }
-    return 1; // if we make it to the end, it's valid
+  const levels = report.split(" ");
+  const first = Number(levels[0]);
+  const second = Number(levels[1]);
+  const increasing = first - second < 0; // negative === increasing; positive === decreasing - based off first 2 numbers
+  for (let i = 0; i < levels.length - 1; i++) {
+    const curr = Number(levels[i]);
+    const next = Number(levels[i + 1]);
+    const diff = curr - next;
+    // if difference between nums is greater than 3 or 0 - invalid
+    if (Math.abs(diff) > 3 || !diff) return 0;
+    if (diff < 0 && !increasing) return 0; // if numbers going up and we're supposed to be going down - invalid
+    if (diff > 0 && increasing) return 0; // and vice versa
+  }
+  return 1; // if we make it to the end, it's valid
 };
-
 
 // break up text into "reports" stored in an array
 const reports = input.split("\n");
 
 let safeCount = 0;
 
-reports.forEach(reportStr => {
-    // break up reports into levels
-    safeCount += checkReport(reportStr);
+reports.forEach((reportStr) => {
+  // break up reports into levels
+  safeCount += checkReport(reportStr);
 });
 
 console.log(safeCount); // 257
+
+/*
+--- Part Two ---
+The engineers are surprised by the low number of safe reports until they realize they forgot to tell you about the Problem Dampener.
+
+The Problem Dampener is a reactor-mounted module that lets the reactor safety systems tolerate a single bad level in what would otherwise be a safe report. It's like the bad level never happened!
+
+Now, the same rules apply as before, except if removing a single level from an unsafe report would make it safe, the report instead counts as safe.
+
+More of the above example's reports are now safe:
+
+7 6 4 2 1: Safe without removing any level.
+1 2 7 8 9: Unsafe regardless of which level is removed.
+9 7 6 2 1: Unsafe regardless of which level is removed.
+1 3 2 4 5: Safe by removing the second level, 3.
+8 6 4 4 1: Safe by removing the third level, 4.
+1 3 6 7 9: Safe without removing any level.
+Thanks to the Problem Dampener, 4 reports are actually safe!
+
+Update your analysis by handling situations where the Problem Dampener can remove a single level from unsafe reports. How many reports are now safe?
+*/
+
+// check whether a report is increasing or decreasing, accounting for potential bad 1st or 2nd level
+const checkDirection = (levels) => {
+  const first = Number(levels[0]);
+  const second = Number(levels[1]);
+  const last = Number(levels[levels.length - 1]);
+  let direction = 0;
+  // when comparing 2 nums, increment if nums are increasing
+  first - second < 0 ? direction++ : direction--;
+  second - last < 0 ? direction++ : direction--;
+  first - last < 0 ? direction++ : direction--;
+  return direction > 0;
+};
+
+// updated helper function to check validity of report
+const dampCheck = (report) => {
+  let skipCount = 0;
+  const levels = report.split(" ");
+  const increasing = checkDirection(levels);
+  debugger;
+  for (let i = 1; i < levels.length; i++) {
+    const prev = Number(levels[i - 1]);
+    const curr = Number(levels[i]);
+    const diff = prev - curr;
+    // if difference between nums is greater than 3 or 0 - invalid
+    if (Math.abs(diff) > 3 || !diff) {
+      const next = levels[i + 1];
+      const skipDiff = Math.abs(prev - next);
+      const nextDiff = Math.abs(curr - next);
+      // if there's another level after curr, and skipping curr doesn't fix just return 0
+      if (next !== undefined && (!skipDiff || skipDiff > 3)) {
+       return 0;
+      }
+      skipCount++;
+      i++;
+      continue;
+    }
+    if (diff < 0 && !increasing) {
+      skipCount++;
+      i++;
+      continue;
+    } // if numbers going up and we're supposed to be going down - invalid
+    if (diff > 0 && increasing) {
+      skipCount++;
+      i++;
+      continue;
+    } // and vice versa
+  }
+  debugger;
+  return skipCount < 2 ? 1 : 0; // check # of bad levels
+};
+
+let dampCount = 0;
+
+reports.forEach((reportStr) => (dampCount += dampCheck(reportStr)));
+
+console.log(dampCount);
+
+console.log(dampCheck("85 86 87 88 89 93 94"));
