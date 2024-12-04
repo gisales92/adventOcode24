@@ -1097,42 +1097,25 @@ const checkDirection = (levels) => {
   return direction > 0;
 };
 
+// helper function to check whether 2 numbers are good/safe
+const isSafe = (n1, n2, direction) => {
+  if (Math.abs(n1 - n2) > 3 || n1 === n2) return false;
+  // direction is boolean; true === increasing
+  if (n1 - n2 > 0 && direction) return false;
+  if (n1 - n2 < 0 && !direction) return false;
+  return true;
+};
+
 // updated helper function to check validity of report
 const dampCheck = (report) => {
-  let skipCount = 0;
   const levels = report.split(" ");
   const increasing = checkDirection(levels);
-  debugger;
-  for (let i = 1; i < levels.length; i++) {
-    const prev = Number(levels[i - 1]);
+  for (let i = 0; i < levels.length - 1; i++) {
     const curr = Number(levels[i]);
-    const diff = prev - curr;
-    // if difference between nums is greater than 3 or 0 - invalid
-    if (Math.abs(diff) > 3 || !diff) {
-      const next = levels[i + 1];
-      const skipDiff = Math.abs(prev - next);
-      const nextDiff = Math.abs(curr - next);
-      // if there's another level after curr, and skipping curr doesn't fix just return 0
-      if (next !== undefined && (!skipDiff || skipDiff > 3)) {
-       return 0;
-      }
-      skipCount++;
-      i++;
-      continue;
-    }
-    if (diff < 0 && !increasing) {
-      skipCount++;
-      i++;
-      continue;
-    } // if numbers going up and we're supposed to be going down - invalid
-    if (diff > 0 && increasing) {
-      skipCount++;
-      i++;
-      continue;
-    } // and vice versa
+    const next = Number(levels[i + 1]);
+    if (!isSafe(curr, next, increasing)) return 0;
   }
-  debugger;
-  return skipCount < 2 ? 1 : 0; // check # of bad levels
+  return 1; // if we make it to the end, it's valid
 };
 
 let dampCount = 0;
@@ -1140,5 +1123,3 @@ let dampCount = 0;
 reports.forEach((reportStr) => (dampCount += dampCheck(reportStr)));
 
 console.log(dampCount);
-
-console.log(dampCheck("85 86 87 88 89 93 94"));
