@@ -1110,10 +1110,32 @@ const isSafe = (n1, n2, direction) => {
 const dampCheck = (report) => {
   const levels = report.split(" ");
   const increasing = checkDirection(levels);
+  let skipped = false;
+  let prev;
   for (let i = 0; i < levels.length - 1; i++) {
     const curr = Number(levels[i]);
     const next = Number(levels[i + 1]);
-    if (!isSafe(curr, next, increasing)) return 0;
+    if (!isSafe(curr, next, increasing)) {
+      if (skipped) return 0;
+      const oneDeeper = Number(levels[i + 2]); // might be undefined at end of level - if we haven't skipped already that's OK
+      if (oneDeeper) {
+        // if we can just skip over the next one, let's skip it and keep checking
+        if (isSafe(curr, oneDeeper, increasing)) {
+          skipped = true;
+          i++;
+        } else if (isSafe(next, oneDeeper, increasing)) {
+          // else if we have to drop the current number to be good
+          // we have to make sure it's safe with the prev number
+          if (prev !== undefined && !isSafe(prev, next, increasing)) return 0;
+          // otherwise we can keep going
+          skipped = true;
+          i++;
+        } else {
+          return 0;
+        }
+      }
+    }
+    prev = curr;
   }
   return 1; // if we make it to the end, it's valid
 };
