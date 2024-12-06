@@ -58,14 +58,10 @@ This time, the sum of the results is 48 (2*4 + 8*5).
 Handle the new instructions; what do you get if you add up all of the results of just the enabled multiplications?
 */
 
-// const dos = input.matchAll(/do\(\)/g);
-
-// const donts = input.matchAll(/don\'t\(\)/g);
-
 let enabledSum = 0;
 let enabled = true;
 let sliceableInput = input;
-// strat -> look for first do, don't, or mul.
+// strategy -> look for first do, don't, or mul.
 while (sliceableInput.length) {
   const firstDo = sliceableInput.match(/do\(\)/);
   const firstDont = sliceableInput.match(/don\'t\(\)/);
