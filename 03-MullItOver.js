@@ -30,9 +30,64 @@ const inputArr = [
 const input = inputArr.join("");
 const matches = input.matchAll(/mul\((\d{1,3}),(\d{1,3})\)/g); // we love regex for string parsing
 let sum = 0;
+// String.matchAll returns an iterator that we can use a for...of loop on
 for (let match of matches) {
   // capture groups in our regex make life easy, just remember input is a string
   sum += Number(match[1]) * Number(match[2]);
 }
 
 console.log(sum); // 153469856
+
+/*
+--- Part Two ---
+As you scan through the corrupted memory, you notice that some of the conditional statements are also still intact. If you handle some of the uncorrupted conditional statements in the program, you might be able to get an even more accurate result.
+
+There are two new instructions you'll need to handle:
+
+The do() instruction enables future mul instructions.
+The don't() instruction disables future mul instructions.
+Only the most recent do() or don't() instruction applies. At the beginning of the program, mul instructions are enabled.
+
+For example:
+
+xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
+This corrupted memory is similar to the example from before, but this time the mul(5,5) and mul(11,8) instructions are disabled because there is a don't() instruction before them. The other mul instructions function normally, including the one at the end that gets re-enabled by a do() instruction.
+
+This time, the sum of the results is 48 (2*4 + 8*5).
+
+Handle the new instructions; what do you get if you add up all of the results of just the enabled multiplications?
+*/
+
+// const dos = input.matchAll(/do\(\)/g);
+
+// const donts = input.matchAll(/don\'t\(\)/g);
+
+let enabledSum = 0;
+let enabled = true;
+let sliceableInput = input;
+// strat -> look for first do, don't, or mul.
+while (sliceableInput.length) {
+  const firstDo = sliceableInput.match(/do\(\)/);
+  const firstDont = sliceableInput.match(/don\'t\(\)/);
+  const firstMul = sliceableInput.match(/mul\((\d{1,3}),(\d{1,3})\)/);
+  // if no more matches, we are done
+  if (null === firstDo && null === firstDont && null === firstMul) break;
+  // filter out nulls, grab match with lowest index
+  let firstMatch = [firstDo, firstDont, firstMul].filter(m => m !== null).sort((a, b) => a.index - b.index)[0];
+  // if it's do -> enable muls
+  if (firstMatch[0] === "do()") {
+    enabled = true;
+  } else if (firstMatch[0] === "don't()") {
+    // if it's don't -> disable muls
+    enabled = false;
+  } else {
+    // if it's mul -> check whether we enabled or disabled, add if enabled
+    if (enabled) {
+      enabledSum += Number(firstMul[1]) * Number(firstMul[2]);
+    }
+  }
+  // slice off the front of the string we already checked
+  sliceableInput = sliceableInput.slice(firstMatch.index + 4);
+}
+
+console.log(enabledSum); // 77055967
