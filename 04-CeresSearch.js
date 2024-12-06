@@ -293,3 +293,32 @@ In this example, an X-MAS appears 9 times.
 
 Flip the word search from the instructions back over to the word search side and try again. How many times does an X-MAS appear?
 */
+
+// updated helper function to check if we have an X-MAS
+const checkX = (aRow, aCol, puzzle) => {
+    let d1 = "";
+    let d2 = "";
+    //upleft
+    d1 += puzzle[aRow - 1][aCol - 1];
+    // upright
+    d2 += puzzle[aRow - 1][aCol + 1];
+    // downright
+    d1 += puzzle[aRow + 1][aCol + 1];
+    // downleft
+    d2 += puzzle[aRow + 1][aCol - 1];
+    return (d1 === "MS" || d1 === "SM") && (d2 === "MS" || d2 === "SM") ? 1 : 0;
+  };
+
+  const searchX = (puzzle) => {
+    let count = 0;
+    for (let row = 1; row < puzzle.length - 1; row++) {
+        for (let col = 1; col < puzzle[row].length - 1; col++) {
+            let char = puzzle[row][col];
+            if (char === "A") count += checkX(row, col, puzzle);
+        }
+    }
+    console.log(count);
+  };
+
+  searchX(testInput); // 9
+  searchX(puzzleInput) // 2011
