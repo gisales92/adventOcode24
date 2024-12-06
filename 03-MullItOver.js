@@ -69,7 +69,9 @@ while (sliceableInput.length) {
   // if no more matches, we are done
   if (null === firstDo && null === firstDont && null === firstMul) break;
   // filter out nulls, grab match with lowest index
-  let firstMatch = [firstDo, firstDont, firstMul].filter(m => m !== null).sort((a, b) => a.index - b.index)[0];
+  let firstMatch = [firstDo, firstDont, firstMul]
+    .filter((m) => m !== null)
+    .sort((a, b) => a.index - b.index)[0];
   // if it's do -> enable muls
   if (firstMatch[0] === "do()") {
     enabled = true;
@@ -84,6 +86,6 @@ while (sliceableInput.length) {
   }
   // slice off the front of the string we already checked
   sliceableInput = sliceableInput.slice(firstMatch.index + 4);
-}
+};
 
 console.log(enabledSum); // 77055967
