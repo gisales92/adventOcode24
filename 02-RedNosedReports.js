@@ -1144,4 +1144,4 @@ let dampCount = 0;
 
 reports.forEach((reportStr) => (dampCount += dampCheck(reportStr)));
 
-console.log(dampCount);
+console.log(dampCount); // 328
