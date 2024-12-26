@@ -224,11 +224,53 @@ const puzzleByRows = puzzleInputString.split("\n");
 
 const puzzleMatrix = puzzleByRows.map(row => row.split(""));
 
-puzzleMatrix.forEach((row, i) => {
-    if (row.includes("^")) {
-        console.log(("col", row.indexOf("^")));
-        console.log(i)
-    }
-});
+const guardMoves = ["^", ">", "v", "<"];
 
-console.log(puzzleMatrix[89][67])
+
+// helper function to move guard to new coords based on direction
+const nextMove = (direction, [row, col]) => {
+    const move = {
+        "^": [row - 1, col],
+        ">": [row, col + 1],
+        "v": [row + 1, col],
+        "<": [row, col - 1]
+    };
+    return move[direction];
+};
+
+// helper function to find starting point
+const findGuardStart = () => {
+    for (let row = 0; row < puzzleMatrix.length; row++) {
+        for (let col = 0; col < puzzleMatrix[row].length; col++) {
+            if (guardMoves.includes(puzzleMatrix[row][col])) return [row, col];
+        }
+    }
+};
+
+const calculateGuardMovement = () => {
+    // find the start
+    let [currRow, currCol] = findGuardStart(); // 89, 67
+    let currDirection = puzzleMatrix[currRow][currCol];
+    puzzleMatrix[currRow][currCol] = "." // so that we know we can traverse thru the starting point
+    // create set of coords to avoid duplicates
+    const visited = new Set();
+    // while within the grid
+    while (puzzleMatrix[currRow][currCol]) {
+        // mark spot as visited
+        visited.add(String([currRow, currCol]));
+        // figure out next move
+        let [nextRow, nextCol] = nextMove(currDirection, [currRow, currCol]);
+        let nextSpot = puzzleMatrix[nextRow] ? puzzleMatrix[nextRow][nextCol] : undefined;
+        // if next spot is # we have to pivot
+        if (nextSpot === "#") {
+            currDirection = guardMoves[(guardMoves.indexOf(currDirection) + 1) % 4];
+        } else if (nextSpot === ".") { // we can just keep going by reassigning curr row and col
+            currRow = nextRow;
+            currCol = nextCol;
+        } else { // if it's undefined then we done
+            return visited.size;
+        }
+    }
+};
+
+console.log(calculateGuardMovement()); // 4696
