@@ -239,7 +239,7 @@ const nextMove = (direction, [row, col]) => {
 };
 
 // helper function to find starting point
-const findGuardStart = () => {
+const findGuardStart = (puzzleMatrix) => {
     for (let row = 0; row < puzzleMatrix.length; row++) {
         for (let col = 0; col < puzzleMatrix[row].length; col++) {
             if (guardMoves.includes(puzzleMatrix[row][col])) return [row, col];
@@ -247,11 +247,14 @@ const findGuardStart = () => {
     }
 };
 
-const calculateGuardMovement = () => {
+let originalPath = new Set();
+
+const calculateGuardMovement = (puzzleMatrix) => {
     // find the start
-    let [currRow, currCol] = findGuardStart(); // 89, 67
+
+    let [currRow, currCol] = findGuardStart(puzzleMatrix); // 89, 67
     let currDirection = puzzleMatrix[currRow][currCol];
-    puzzleMatrix[currRow][currCol] = "." // so that we know we can traverse thru the starting point
+    // puzzleMatrix[currRow][currCol] = "." // so that we know we can traverse thru the starting point
     // create set of coords to avoid duplicates
     const visited = new Set();
     // while within the grid
@@ -264,13 +267,184 @@ const calculateGuardMovement = () => {
         // if next spot is # we have to pivot
         if (nextSpot === "#") {
             currDirection = guardMoves[(guardMoves.indexOf(currDirection) + 1) % 4];
-        } else if (nextSpot === ".") { // we can just keep going by reassigning curr row and col
+        } else if (nextSpot === "." || nextSpot === "^") { // we can just keep going by reassigning curr row and col
             currRow = nextRow;
             currCol = nextCol;
         } else { // if it's undefined then we done
+            originalPath = visited;
             return visited.size;
         }
     }
 };
 
-console.log(calculateGuardMovement()); // 4696
+
+
+/* 
+--- Part Two ---
+While The Historians begin working around the guard's patrol route, you borrow their fancy device and step outside the lab. From the safety of a supply closet, you time travel through the last few months and record the nightly status of the lab's guard post on the walls of the closet.
+
+Returning after what seems like only a few seconds to The Historians, they explain that the guard's patrol area is simply too large for them to safely search the lab without getting caught.
+
+Fortunately, they are pretty sure that adding a single new obstruction won't cause a time paradox. They'd like to place the new obstruction in such a way that the guard will get stuck in a loop, making the rest of the lab safe to search.
+
+To have the lowest chance of creating a time paradox, The Historians would like to know all of the possible positions for such an obstruction. The new obstruction can't be placed at the guard's starting position - the guard is there right now and would notice.
+
+In the above example, there are only 6 different positions where a new obstruction would cause the guard to get stuck in a loop. The diagrams of these six situations use O to mark the new obstruction, | to show a position where the guard moves up/down, - to show a position where the guard moves left/right, and + to show a position where the guard moves both up/down and left/right.
+
+Option one, put a printing press next to the guard's starting position:
+
+....#.....
+....+---+#
+....|...|.
+..#.|...|.
+....|..#|.
+....|...|.
+.#.O^---+.
+........#.
+#.........
+......#...
+Option two, put a stack of failed suit prototypes in the bottom right quadrant of the mapped area:
+
+
+....#.....
+....+---+#
+....|...|.
+..#.|...|.
+..+-+-+#|.
+..|.|.|.|.
+.#+-^-+-+.
+......O.#.
+#.........
+......#...
+Option three, put a crate of chimney-squeeze prototype fabric next to the standing desk in the bottom right quadrant:
+
+....#.....
+....+---+#
+....|...|.
+..#.|...|.
+..+-+-+#|.
+..|.|.|.|.
+.#+-^-+-+.
+.+----+O#.
+#+----+...
+......#...
+Option four, put an alchemical retroencabulator near the bottom left corner:
+
+....#.....
+....+---+#
+....|...|.
+..#.|...|.
+..+-+-+#|.
+..|.|.|.|.
+.#+-^-+-+.
+..|...|.#.
+#O+---+...
+......#...
+Option five, put the alchemical retroencabulator a bit to the right instead:
+
+....#.....
+....+---+#
+....|...|.
+..#.|...|.
+..+-+-+#|.
+..|.|.|.|.
+.#+-^-+-+.
+....|.|.#.
+#..O+-+...
+......#...
+Option six, put a tank of sovereign glue right next to the tank of universal solvent:
+
+....#.....
+....+---+#
+....|...|.
+..#.|...|.
+..+-+-+#|.
+..|.|.|.|.
+.#+-^-+-+.
+.+----++#.
+#+----++..
+......#O..
+It doesn't really matter what you choose to use as an obstacle so long as you and The Historians can put it into position without the guard noticing. The important thing is having enough options that you can find one that minimizes time paradoxes, and in this example, there are 6 different positions you could choose.
+
+You need to get the guard stuck in a loop by adding a single new obstruction. How many different positions could you choose for this obstruction?
+*/
+
+const testInputString = `....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#..^.....
+........#.
+#.........
+......#...`
+
+const testByRows = testInputString.split("\n");
+
+const testMatrix = testByRows.map(row => row.split(""));
+
+console.log(calculateGuardMovement(puzzleMatrix)); // 4696
+
+const oppositeDirection = {
+    "^": "v",
+    ">": "<",
+    "v": "^",
+    "<": ">"
+};
+
+const traverseMatrix = (row, col, matrix) => {
+    let puzzleMatrix = [];
+    matrix.forEach(row => {
+        puzzleMatrix.push([]);
+        row.forEach(col => puzzleMatrix[puzzleMatrix.length - 1].push(col));
+    });
+    // find the current direction
+    let currDirection = puzzleMatrix[row][col];
+    let iterCount = 0;
+    // while within the grid
+    while (puzzleMatrix[row][col]) {
+        if (iterCount > 25000) return true; // fall-back option to catch infinte loops
+        // mark spot as visited
+        puzzleMatrix[row][col] = currDirection
+        // figure out next move
+        // console.log("HERE", currDirection, row, col)
+        let [nextRow, nextCol] = nextMove(currDirection, [row, col]);
+        let nextSpot = puzzleMatrix[nextRow] ? puzzleMatrix[nextRow][nextCol] : undefined;
+        // if next spot matches our current direction, we're looping 
+        if (nextSpot === currDirection) {
+            return true;
+        }
+        // if next spot is # we have to pivot
+        else if (nextSpot === "#") {
+            currDirection = guardMoves[(guardMoves.indexOf(currDirection) + 1) % 4];
+        } else if (nextSpot === undefined) { // if it's undefined, we've escaped a loop
+            return false;
+        } else { // anything else, we need to keep going
+            row = nextRow;
+            col = nextCol;
+            iterCount++;
+        }
+    }
+};
+
+
+const calculateObstructions = (puzzleMatrix) => {
+    // find the start
+    let [startRow, startCol] = findGuardStart(puzzleMatrix); // 89, 67
+    // let currDirection = puzzleMatrix[startRow][startCol];
+    let obstructionCount = 0;
+    let pathCoords = [...originalPath];
+    for (let i = 1; i < pathCoords.length; i++) {
+        console.log("i", i, pathCoords[i]);
+        const [obRow, obCol] = pathCoords[i].split(",")
+        puzzleMatrix[obRow][obCol] = "#";
+        if (traverseMatrix(startRow, startCol, puzzleMatrix)) obstructionCount++;
+        puzzleMatrix[obRow][obCol] = ".";
+    }
+
+    return obstructionCount;
+
+};
+
+console.log(calculateObstructions(puzzleMatrix)); // 1443
